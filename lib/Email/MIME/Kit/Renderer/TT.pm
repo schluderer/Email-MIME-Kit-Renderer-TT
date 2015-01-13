@@ -4,6 +4,7 @@ with 'Email::MIME::Kit::Role::Renderer';
 # ABSTRACT: render parts of your mail with Template-Toolkit
 
 use Template 2.1;
+use Template::Provider;
 
 =head1 DESCRIPTION
 
@@ -67,6 +68,21 @@ has template_parameters => (
   default => sub { {} },
 );
 
+has template_provider => (
+  is   => 'ro',
+  isa  => 'Template::Provider',
+  lazy => 1,
+  init_arg => undef,
+  default => sub {
+    my ($self) = @_;
+    Template::Provider->new({
+      ABSOLUTE  => 0,
+      RELATIVE  => 0,
+      %{ $self->template_parameters },
+    });
+  },
+);
+
 has tt => (
   is   => 'ro',
   isa  => 'Template',
@@ -75,10 +91,9 @@ has tt => (
   default  => sub {
     my ($self) = @_;
     Template->new({
-      ABSOLUTE  => 0,
-      RELATIVE  => 0,
       STRICT    => $self->strict,
       EVAL_PERL => $self->eval_perl,
+      LOAD_TEMPLATES => [ $self->template_provider ],
       %{ $self->template_parameters },
     });
   },
